@@ -46,12 +46,6 @@
 
 (defvar fold-this-keymap (make-sparse-keymap))
 (define-key fold-this-keymap (kbd "<return>") 'fold-this-unfold-at-point)
-(define-key fold-this-keymap (kbd "C-g") 'fold-this-unfold-at-point)
-
-(defface fold-this-overlay
-  '((t (:inherit default)))
-  "Face used to highlight the fold overlay."
-  :group 'fold-this)
 
 (defcustom fold-this-persistent-folds nil
   "Non-nil means that folds survive between buffer kills and
@@ -77,12 +71,22 @@ Emacs sessions."
     (overlay-put o 'type 'fold-this)
     (overlay-put o 'invisible t)
     (overlay-put o 'keymap fold-this-keymap)
-    (overlay-put o 'face 'fold-this-overlay)
     (overlay-put o 'modification-hooks '(fold-this--unfold-overlay))
-    (overlay-put o 'display (propertize "." 'face 'fold-this-overlay))
-    (overlay-put o 'before-string (propertize "." 'face 'fold-this-overlay))
+    (overlay-put o 'insert-in-front-hooks '(fold-this--unfold-overlay))
+    (overlay-put o 'display
+       (let* ((prefix (format "+-- %s lines" (count-matches "\n" beg end)))
+              (dashes (make-string (- (window-body-width) 1 (length prefix)) ?-)))
+         (propertize (format "%s %s\n" prefix dashes)
+                     'face '(:inherit "highlight"))))
     (overlay-put o 'evaporate t))
   (deactivate-mark))
+
+;;;###autoload
+(defun fold-this-lines (beg end)
+  (interactive "r")
+  (let ((start-of-line (save-excursion (goto-char beg) (search-backward "\n")))
+        (end-of-line (save-excursion (goto-char end) (search-forward "\n"))))
+    (fold-this (+ start-of-line 1) end-of-line)))
 
 ;;;###autoload
 (defun fold-this-all (beg end)
@@ -100,6 +104,12 @@ Emacs sessions."
   (interactive "r")
   (when (region-active-p)
     (fold-this beg end)))
+
+;;;###autoload
+(defun fold-active-region-lines (beg end)
+  (interactive "r")
+  (when (region-active-p)
+    (fold-this-lines beg end)))
 
 ;;;###autoload
 (defun fold-active-region-all (beg end)
