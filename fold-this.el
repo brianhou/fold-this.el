@@ -88,7 +88,7 @@ Emacs sessions."
 ;;;###autoload
 (defun fold-this-lines (beg end)
   (interactive "r")
-  (let ((start-of-line (save-excursion (goto-char beg) (search-backward "\n")))
+  (let ((start-of-line (save-excursion (goto-char beg) (or (search-backward "\n" nil t) 0)))
         (end-of-line (if (= (char-before end) 10) end
                          (save-excursion (goto-char end) (search-forward "\n")))))
     (fold-this (+ start-of-line 1) end-of-line)))
