@@ -64,6 +64,13 @@ Emacs sessions."
   :type '(choice (integer :tag "Entries" :value 1)
                  (const :tag "No Limit" nil)))
 
+(defun fold-this--text (beg end &optional max-width)
+  (let*
+    ((prefix (format "+-- %s lines" (count-matches "\n" beg end)))
+     (width (- (min (or max-width 80) (window-body-width)) 1 (length prefix)))
+     (dashes (make-string width ?-)))
+    (format "%s %s\n" prefix dashes)))
+
 ;;;###autoload
 (defun fold-this (beg end)
   (interactive "r")
@@ -74,10 +81,7 @@ Emacs sessions."
     (overlay-put o 'modification-hooks '(fold-this--unfold-overlay))
     (overlay-put o 'insert-in-front-hooks '(fold-this--unfold-overlay))
     (overlay-put o 'display
-       (let* ((prefix (format "+-- %s lines" (count-matches "\n" beg end)))
-              (dashes (make-string (- (window-body-width) 1 (length prefix)) ?-)))
-         (propertize (format "%s %s\n" prefix dashes)
-                     'face '(:inherit "highlight"))))
+       (propertize (fold-this--text beg end) 'face '(:inherit "highlight")))
     (overlay-put o 'evaporate t))
   (deactivate-mark))
 
